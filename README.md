@@ -11,4 +11,4 @@ Quickstart
 2. Put documents into `data/` and run `python scripts/index.py --data-dir data/` to index
 3. Run `python scripts/query.py --index-dir ./index --query "your question"`
 
-See `notebooks/` for a demo.
+See `baseline_demo.ipynb` for a demo.
