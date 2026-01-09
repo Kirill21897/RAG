@@ -4,11 +4,12 @@ from src.chunker import chunk_text
 from src.retriever import VectorRetriever  # ← локальный, без OpenAI
 from src.generator import Generator        # ← пока с OpenAI (для генерации)
 from typing import Optional
+import os
 
 class RAGPipeline:
     def __init__(
         self,
-        openai_api_key: Optional[str] = None,
+        openai_api_key: Optional[str] = os.getenv("OPENAI_API_KEY"),
         embedding_model: str = "all-MiniLM-L6-v2"
     ):
         """

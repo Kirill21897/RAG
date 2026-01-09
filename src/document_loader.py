@@ -13,7 +13,7 @@ def load_document(file_path: str, save_intermediate: bool = True) -> str:
     
     if save_intermediate:
         # Сохраняем рядом с исходным файлом
-        converter_path = f"{os.path.dirname(file_path)}/processed" # убираем расширение
+        converter_path = f"{os.path.dirname(file_path)}" # убираем расширение
         save_path = f"{converter_path}_converted.txt"
         md_content = result.document.export_to_text()
         with open(save_path, "w", encoding="utf-8") as f:

@@ -1,9 +1,11 @@
 # src/generator.py
 from openai import OpenAI
 from typing import List
+import os
 
 class Generator:
-    def __init__(self, api_key: str, model: str = "gpt-3.5-turbo"):
+    api_key = os.getenv("OPENAI_API_KEY")
+    def __init__(self, api_key: str, model: str = "gpt-4o-mini"):
         self.client = OpenAI(api_key=api_key)
         self.model = model
 
