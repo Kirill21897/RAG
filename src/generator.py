@@ -1,27 +1,32 @@
-# src/generator.py
-from openai import OpenAI
-from typing import List
-import os
+import requests
 
 class Generator:
-    api_key = os.getenv("OPENAI_API_KEY")
-    def __init__(self, api_key: str, model: str = "gpt-4o-mini"):
-        self.client = OpenAI(api_key=api_key)
-        self.model = model
+    def __init__(self, model_name="qwen3-vl:8b", base_url="http://192.168.88.21:91"):
+        self.url = f"{base_url}/api/generate"
+        self.model_name = model_name
 
-    def generate(self, question: str, context: List[str]) -> str:
-        context_str = "\n\n".join(context)
-        prompt = f"""Answer the question based on the context below.
+    def generate(self, question: str, context: list) -> str:
+        # Объединяем найденные чанки текста в единый контекст
+        context_text = "\n\n".join(context)
         
-Context:
-{context_str}
-
-Question: {question}
-Answer:"""
-
-        response = self.client.chat.completions.create(
-            model=self.model,
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=256
+        # Формируем промпт для модели
+        full_prompt = (
+            f"Используй следующий контекст, чтобы ответить на вопрос.\n"
+            f"Контекст: {context_text}\n"
+            f"Вопрос: {question}\n"
+            f"Ответ:"
         )
-        return response.choices[0].message.content.strip()
+
+        payload = {
+            "model": self.model_name,
+            "prompt": full_prompt,
+            "stream": False
+        }
+
+        try:
+            response = requests.post(self.url, json=payload, timeout=30)
+            response.raise_for_status()
+            # Извлекаем текст из ключа 'response' (как в твоем примере)
+            return response.json().get("response", "Ошибка: Пустой ответ от сервера")
+        except Exception as e:
+            return f"Ошибка при обращении к серверу LLM: {e}"

@@ -1,36 +1,31 @@
-# src/pipeline.py
 from src.document_loader import load_document
 from src.chunker import chunk_text
-from src.retriever import VectorRetriever  # ← локальный, без OpenAI
-from src.generator import Generator        # ← пока с OpenAI (для генерации)
-from typing import Optional
+from src.retriever import VectorRetriever
+from src.generator import Generator
 import os
 
 class RAGPipeline:
-    def __init__(
-        self,
-        openai_api_key: Optional[str] = os.getenv("OPENAI_API_KEY"),
-        embedding_model: str = "all-MiniLM-L6-v2"
-    ):
-        """
-        :param openai_api_key: нужен ТОЛЬКО для генерации ответов (Generator)
-        :param embedding_model: модель для локальных эмбеддингов
-        """
+    def __init__(self, model_name: str = "qwen3-vl:8b", embedding_model: str = "all-MiniLM-L6-v2"):
+        # Ретривер (векторная база) работает локально на твоем ПК
         self.retriever = VectorRetriever(model_name=embedding_model)
-        self.generator = Generator(openai_api_key) if openai_api_key else None
+        # Генератор стучится на твой сервер 192.168.88.21
+        self.generator = Generator(model_name=model_name)
 
-    def ingest(self, file_path: str, chunk_size: int = 512, overlap: int = 64):
-        print(f"Loading document: {file_path}")
+    def ingest(self, file_path: str):
+        print(f"Индексация файла: {file_path}")
         text = load_document(file_path)
-        print(f"Total characters: {len(text)}")
-        chunks = chunk_text(text, chunk_size=chunk_size, overlap=overlap)
-        print(f"Created {len(chunks)} chunks.")
+        chunks = chunk_text(text)
         self.retriever.build_index(chunks)
-        print("Index built successfully.")
+        print("Индекс успешно построен.")
 
-    def query(self, question: str, k: int = 3) -> str:
-        if self.generator is None:
-            raise ValueError("OpenAI API key not provided. Cannot generate answers.")
+    def query(self, question: str, k: int = 3) -> dict:
+        # 1. Ищем релевантные куски текста локально
         context = self.retriever.search(question, k=k)
+        
+        # 2. Отправляем вопрос и контекст на удаленный сервер
         answer = self.generator.generate(question, context)
-        return answer
+        
+        return {
+            "answer": answer,
+            "contexts": context # Для Ragas
+        }
